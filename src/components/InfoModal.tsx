@@ -44,7 +44,7 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps): React.JSX.Elemen
 
         <p className="modal-text">
           For any inquiries or communication regarding content, please contact:{' '}
-          <a href="mailto:hello@walleee.app" className="modal-link">
+          <a href="mailto:iambhvshh@outlook.com" className="modal-link">
             hello@walleee.app
           </a>
         </p>
