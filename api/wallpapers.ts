@@ -5,7 +5,7 @@ import type {
   WallpaperItem,
   WallpapersApiResponse,
   ApiErrorResponse,
-} from '../src/types/index.js';
+} from '../src/types/index';
 
 // ─── Cloudinary Config ────────────────────────────────────────────────────────
 
@@ -27,19 +27,26 @@ function buildOptimizedUrl(cloudName: string, publicId: string, width: number): 
 }
 
 function transformResource(cloudName: string, resource: CloudinaryResource): WallpaperItem {
-  return {
+  const rawTitle: string | undefined =
+    resource.context?.custom?.['caption'] ?? resource.public_id.split('/').pop();
+
+  const item: WallpaperItem = {
     id: resource.public_id,
     publicId: resource.public_id,
-    // Full quality for lightbox / download
     url: `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/${resource.public_id}`,
-    // Thumbnail: 800px wide, auto format & quality
     thumbnailUrl: buildOptimizedUrl(cloudName, resource.public_id, 800),
     width: resource.width,
     height: resource.height,
     format: resource.format,
     tags: resource.tags,
-    title: resource.context?.custom?.['caption'] ?? resource.public_id.split('/').pop(),
   };
+
+  // exactOptionalPropertyTypes: only assign when defined
+  if (rawTitle !== undefined) {
+    item.title = rawTitle;
+  }
+
+  return item;
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -59,18 +66,17 @@ export default async function handler(
     const apiKey = assertEnv(API_KEY, 'CLOUDINARY_API_KEY');
     const apiSecret = assertEnv(API_SECRET, 'CLOUDINARY_API_SECRET');
 
-    const nextCursor = typeof req.query['next_cursor'] === 'string' ? req.query['next_cursor'] : undefined;
-    const maxResults = 50;
+    const nextCursor =
+      typeof req.query['next_cursor'] === 'string' ? req.query['next_cursor'] : undefined;
 
-    // Cloudinary Search API
     const searchBody: Record<string, unknown> = {
       expression: `folder:${FOLDER}`,
       sort_by: [{ created_at: 'desc' }],
-      max_results: maxResults,
+      max_results: 50,
       with_field: ['tags', 'context'],
     };
 
-    if (nextCursor) {
+    if (nextCursor !== undefined) {
       searchBody['next_cursor'] = nextCursor;
     }
 
@@ -98,8 +104,11 @@ export default async function handler(
     const payload: WallpapersApiResponse = {
       wallpapers: data.resources.map((r) => transformResource(cloudName, r)),
       total: data.total_count,
-      nextCursor: data.next_cursor,
     };
+
+    if (data.next_cursor !== undefined) {
+      payload.nextCursor = data.next_cursor;
+    }
 
     // Cache at edge for 1 hour, stale while revalidate for 24h
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
