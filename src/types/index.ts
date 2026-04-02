@@ -17,7 +17,7 @@ export interface CloudinaryResource {
 export interface CloudinarySearchResponse {
   resources: CloudinaryResource[];
   total_count: number;
-  next_cursor?: string;
+  next_cursor?: string | undefined;
   rate_limit_allowed: number;
   rate_limit_reset_at: string;
   rate_limit_remaining: number;
@@ -34,13 +34,13 @@ export interface WallpaperItem {
   height: number;
   format: string;
   tags: string[];
-  title?: string;
+  title?: string | undefined;
 }
 
 export interface WallpapersApiResponse {
   wallpapers: WallpaperItem[];
   total: number;
-  nextCursor?: string;
+  nextCursor?: string | undefined;
 }
 
 export interface ApiErrorResponse {
