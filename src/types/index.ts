@@ -17,7 +17,7 @@ export interface CloudinaryResource {
 export interface CloudinarySearchResponse {
   resources: CloudinaryResource[];
   total_count: number;
-  next_cursor?: string | undefined;
+  next_cursor?: string;
   rate_limit_allowed: number;
   rate_limit_reset_at: string;
   rate_limit_remaining: number;
@@ -58,8 +58,10 @@ export interface LightboxState {
 }
 
 export interface GalleryState {
+  allItems: WallpaperItem[];
   items: WallpaperItem[];
   carousel: WallpaperItem[];
+  total: number;
   isLoading: boolean;
   error: string | null;
 }
