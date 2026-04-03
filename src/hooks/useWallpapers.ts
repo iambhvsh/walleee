@@ -75,8 +75,10 @@ function getCachedCarousel(all: WallpaperItem[]): WallpaperItem[] {
 
 export function useWallpapers(): GalleryState & { reload: () => void } {
   const [state, setState] = useState<GalleryState>({
+    allItems: [],
     items: [],
     carousel: [],
+    total: 0,
     isLoading: true,
     error: null,
   });
@@ -85,7 +87,6 @@ export function useWallpapers(): GalleryState & { reload: () => void } {
     setState((s) => ({ ...s, isLoading: true, error: null }));
 
     try {
-      // Fetch all pages (up to 200 items for simplicity; add cursor pagination if needed)
       const res = await fetch('/api/wallpapers');
       if (!res.ok) {
         throw new Error(`API error ${res.status}`);
@@ -98,7 +99,16 @@ export function useWallpapers(): GalleryState & { reload: () => void } {
       const carouselIds = new Set(carousel.map((w) => w.id));
       const gallery = fisherYatesShuffle(all.filter((w) => !carouselIds.has(w.id)));
 
-      setState({ items: gallery, carousel, isLoading: false, error: null });
+      // allItems = carousel first, then gallery — preserves a consistent index order
+      // for the lightbox so clicking carousel[0] opens index 0, gallery[0] opens index 4, etc.
+      setState({
+        allItems: [...carousel, ...gallery],
+        items: gallery,
+        carousel,
+        total: data.total,
+        isLoading: false,
+        error: null,
+      });
     } catch (err) {
       setState((s) => ({
         ...s,
