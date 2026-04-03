@@ -1,9 +1,19 @@
 interface InfoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  total: number;
 }
 
-export function InfoModal({ isOpen, onClose }: InfoModalProps): React.JSX.Element {
+function formatCount(n: number): string {
+  if (n === 0) return '';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return n.toString();
+}
+
+export function InfoModal({ isOpen, onClose, total }: InfoModalProps): React.JSX.Element {
+  const countLabel = formatCount(total);
+
   return (
     <div
       id="info-overlay"
@@ -31,7 +41,8 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps): React.JSX.Elemen
         </div>
 
         <p className="modal-text">
-          Walleee is a curated wallpaper application featuring a collection of visuals created by
+          Walleee is a curated wallpaper application featuring
+          {countLabel ? ` a collection of ${countLabel} visuals` : ' a collection of visuals'} created by
           artists and designers from around the world. All wallpapers available within the app
           remain the intellectual property of their respective creators and rights holders.
         </p>
@@ -45,10 +56,11 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps): React.JSX.Elemen
         <p className="modal-text">
           For any inquiries or communication regarding content, please contact:{' '}
           <a href="mailto:iambhvshh@outlook.com" className="modal-link">
-            hello@walleee.app
+            iambhvshh@outlook.com
           </a>
         </p>
       </div>
     </div>
   );
 }
+
