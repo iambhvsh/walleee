@@ -20,27 +20,29 @@ function todayLabel(): string {
 
 export function App(): React.JSX.Element {
   const { theme, toggle: toggleTheme } = useTheme();
-  const { items, carousel, isLoading, error } = useWallpapers();
+  const { allItems, items, carousel, total, isLoading, error } = useWallpapers();
   const [infoOpen, setInfoOpen] = useState(false);
 
-  // Lightbox operates over the full gallery (items), not carousel
-  const lb = useLightbox(items);
+  // Lightbox operates over allItems (carousel + gallery) so indices are always correct
+  const lb = useLightbox(allItems);
 
+  // Carousel items are at the front of allItems (indices 0..carousel.length-1)
   const handleCarouselClick = useCallback(
-    (_idx: number, item: WallpaperItem) => {
-      // Find item in gallery list; if not present (carousel-only), append
-      const galleryIdx = items.findIndex((w) => w.id === item.id);
-      if (galleryIdx !== -1) {
-        lb.open(galleryIdx);
-      } else {
-        // carousel item not in gallery — open with its own index placeholder
-        lb.open(0);
-      }
+    (carouselIdx: number, _item: WallpaperItem) => {
+      lb.open(carouselIdx);
     },
-    [items, lb],
+    [lb],
   );
 
-  const isEmpty = !isLoading && items.length === 0 && carousel.length === 0;
+  // Gallery items start after carousel in allItems
+  const handleGalleryClick = useCallback(
+    (galleryIdx: number) => {
+      lb.open(carousel.length + galleryIdx);
+    },
+    [lb, carousel.length],
+  );
+
+  const isEmpty = !isLoading && allItems.length === 0;
 
   return (
     <>
@@ -68,7 +70,7 @@ export function App(): React.JSX.Element {
         {isEmpty ? (
           <EmptyState visible />
         ) : (
-          <Gallery items={items} isLoading={isLoading} onItemClick={lb.open} />
+          <Gallery items={items} isLoading={isLoading} onItemClick={handleGalleryClick} />
         )}
       </main>
 
@@ -80,7 +82,11 @@ export function App(): React.JSX.Element {
         onPrev={lb.prev}
       />
 
-      <InfoModal isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
+      <InfoModal
+        isOpen={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        total={total}
+      />
     </>
   );
 }
