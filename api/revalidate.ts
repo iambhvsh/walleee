@@ -4,11 +4,13 @@ import type { ApiErrorResponse } from '../src/types/index';
 import { API_SECRET, REVALIDATE_SECRET, APP_URL } from './_config';
 
 // ─── Vercel config ────────────────────────────────────────────────────────────
+
 export const config = {
   api: { bodyParser: false },
 };
 
 // ─── Read raw body from stream ────────────────────────────────────────────────
+
 function readRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -46,6 +48,7 @@ function verifyCloudinarySignature(
 }
 
 // ─── Bust /api/wallpapers cache ───────────────────────────────────────────────
+
 async function revalidateWallpapersCache(): Promise<void> {
   if (!APP_URL || !REVALIDATE_SECRET) {
     console.warn('[revalidate] APP_URL or REVALIDATE_SECRET missing — skipping');
@@ -71,7 +74,8 @@ async function revalidateWallpapersCache(): Promise<void> {
   }
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
+// ─── Handler ────────────────────────────────────────────────────────────────
+
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'POST') {
     const err: ApiErrorResponse = { error: 'method_not_allowed', message: 'Only POST is supported' };
