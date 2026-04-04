@@ -1,7 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { LazyImage } from './LazyImage';
+import { DownloadIcon } from './Gallery';
 import type { WallpaperItem } from '@/types';
-import { downloadFile, filenameFromPublicId } from '@/utils/download';
+import { downloadFile, filenameFromItem } from '@/utils/download';
 
 interface CarouselProps {
   items: WallpaperItem[];
@@ -15,31 +16,42 @@ function SkeletonSlide(): React.JSX.Element {
 
 interface SlideProps {
   item: WallpaperItem;
-  onClick: () => void;
+  index: number;
+  onItemClick: (index: number, item: WallpaperItem) => void;
 }
 
-function Slide({ item, onClick }: SlideProps): React.JSX.Element {
+function Slide({ item, index, onItemClick }: SlideProps): React.JSX.Element {
+  const handleClick    = useCallback(() => onItemClick(index, item), [onItemClick, index, item]);
   const handleDownload = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      downloadFile(item.url, filenameFromPublicId(item.publicId));
+      downloadFile(item.url, filenameFromItem(item.publicId, item.format));
     },
-    [item],
+    [item.url, item.publicId, item.format],
+  );
+  const handleKey = useCallback(
+    (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onItemClick(index, item); },
+    [onItemClick, index, item],
   );
 
   return (
-    <div className="hero-carousel-slide" onClick={onClick} role="button" tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}>
+    <div
+      className="hero-carousel-slide"
+      onClick={handleClick}
+      onKeyDown={handleKey}
+      role="button"
+      tabIndex={0}
+      aria-label={item.title ?? 'Open wallpaper'}
+    >
+      {/* Carousel images are above the fold — load eagerly */}
       <LazyImage
         src={item.thumbnailUrl}
         alt={item.title ?? 'Wallpaper'}
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        rootMargin="300px 0px"
+        priority
       />
       <button className="hero-dl-pill" onClick={handleDownload} aria-label="Save wallpaper">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
+        <DownloadIcon size={14} />
         <span>Save</span>
       </button>
     </div>
@@ -47,24 +59,18 @@ function Slide({ item, onClick }: SlideProps): React.JSX.Element {
 }
 
 export function Carousel({ items, isLoading, onItemClick }: CarouselProps): React.JSX.Element {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
   if (isLoading) {
     return (
-      <div className="hero-carousel" ref={wrapperRef}>
+      <div className="hero-carousel">
         {Array.from({ length: 4 }, (_, i) => <SkeletonSlide key={i} />)}
       </div>
     );
   }
 
   return (
-    <div className="hero-carousel" ref={wrapperRef}>
+    <div className="hero-carousel">
       {items.map((item, idx) => (
-        <Slide
-          key={item.id}
-          item={item}
-          onClick={() => onItemClick(idx, item)}
-        />
+        <Slide key={item.id} item={item} index={idx} onItemClick={onItemClick} />
       ))}
     </div>
   );
