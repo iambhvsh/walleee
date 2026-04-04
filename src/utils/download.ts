@@ -1,6 +1,5 @@
 /**
- * Triggers a native browser download by creating and clicking a temporary anchor.
- * Avoids blob URLs and prevents RAM spikes on mobile.
+ * Triggers a native browser download.
  */
 export function downloadFile(url: string, filename: string): void {
   const a = document.createElement('a');
@@ -13,9 +12,12 @@ export function downloadFile(url: string, filename: string): void {
 }
 
 /**
- * Derives a download filename from a Cloudinary public_id or URL.
+ * Derives a download filename from a Cloudinary public_id, preserving the
+ * actual format so downloads get the correct extension (not always .jpg).
  */
-export function filenameFromPublicId(publicId: string): string {
+export function filenameFromItem(publicId: string, format: string): string {
   const base = publicId.split('/').pop() ?? publicId;
-  return `${base}.jpg`;
+  // Normalise common aliases
+  const ext = format === 'jpeg' ? 'jpg' : format;
+  return `${base}.${ext}`;
 }
