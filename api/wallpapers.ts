@@ -9,7 +9,7 @@ import type {
 import {
   CLOUD_NAME, API_KEY, API_SECRET, FOLDER,
   REVALIDATE_SECRET, assertEnv, sanitiseFolder,
-} from './_config';
+} from './_config.js';
 
 // ─── API security ────────────────────────────────────────────────────────────
 
