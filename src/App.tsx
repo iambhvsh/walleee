@@ -1,44 +1,34 @@
 import { useState, useCallback } from 'react';
-import { Header } from '@/components/Header';
-import { Carousel } from '@/components/Carousel';
-import { Gallery } from '@/components/Gallery';
-import { Lightbox } from '@/components/Lightbox';
-import { InfoModal } from '@/components/InfoModal';
-import { EmptyState } from '@/components/EmptyState';
+import { Header }       from '@/components/Header';
+import { Carousel }     from '@/components/Carousel';
+import { Gallery }      from '@/components/Gallery';
+import { Lightbox }     from '@/components/Lightbox';
+import { InfoModal }    from '@/components/InfoModal';
+import { EmptyState }   from '@/components/EmptyState';
 import { useWallpapers } from '@/hooks/useWallpapers';
-import { useTheme } from '@/hooks/useTheme';
-import { useLightbox } from '@/hooks/useLightbox';
+import { useTheme }     from '@/hooks/useTheme';
+import { useLightbox }  from '@/hooks/useLightbox';
 import type { WallpaperItem } from '@/types';
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
+    weekday: 'long', month: 'long', day: 'numeric',
   });
 }
 
 export function App(): React.JSX.Element {
-  const { theme, toggle: toggleTheme } = useTheme();
-  const { allItems, items, carousel, total, isLoading, error } = useWallpapers();
-  const [infoOpen, setInfoOpen] = useState(false);
-
-  // Lightbox operates over allItems (carousel + gallery) so indices are always correct
+  const { theme, toggle: toggleTheme }                        = useTheme();
+  const { allItems, items, carousel, total, isLoading, error, reload } = useWallpapers();
+  const [infoOpen, setInfoOpen]                               = useState(false);
   const lb = useLightbox(allItems);
 
-  // Carousel items are at the front of allItems (indices 0..carousel.length-1)
   const handleCarouselClick = useCallback(
-    (carouselIdx: number, _item: WallpaperItem) => {
-      lb.open(carouselIdx);
-    },
+    (carouselIdx: number, _item: WallpaperItem) => { lb.open(carouselIdx); },
     [lb],
   );
 
-  // Gallery items start after carousel in allItems
   const handleGalleryClick = useCallback(
-    (galleryIdx: number) => {
-      lb.open(carousel.length + galleryIdx);
-    },
+    (galleryIdx: number) => { lb.open(carousel.length + galleryIdx); },
     [lb, carousel.length],
   );
 
@@ -61,14 +51,19 @@ export function App(): React.JSX.Element {
         <div className="section-header">
           <h2 className="section-title">All Wallpapers</h2>
           {error && (
-            <span className="meta-text" style={{ color: '#ff453a' }}>
-              {error}
-            </span>
+            <button
+              className="meta-text"
+              style={{ color: '#ff453a', background: 'none', border: 'none',
+                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
+              onClick={reload}
+            >
+              {error} — tap to retry
+            </button>
           )}
         </div>
 
         {isEmpty ? (
-          <EmptyState visible />
+          <EmptyState />
         ) : (
           <Gallery items={items} isLoading={isLoading} onItemClick={handleGalleryClick} />
         )}
@@ -82,11 +77,7 @@ export function App(): React.JSX.Element {
         onPrev={lb.prev}
       />
 
-      <InfoModal
-        isOpen={infoOpen}
-        onClose={() => setInfoOpen(false)}
-        total={total}
-      />
+      <InfoModal isOpen={infoOpen} onClose={() => setInfoOpen(false)} total={total} />
     </>
   );
 }
