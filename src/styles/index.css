@@ -12,6 +12,7 @@
 
 html {
   scroll-behavior: smooth;
+  /* Hint to browser: the page will scroll — promote it to own layer early */
   will-change: scroll-position;
 }
 
@@ -29,6 +30,8 @@ html {
   --btn-bg:     rgba(255, 255, 255, 0.90);
   --btn-color:  #1d1d1f;
   --pill-bg:    rgba(255, 255, 255, 0.88);
+
+  /* Theme transition overlay — opacity is GPU-composited, not painted */
   --theme-overlay-opacity: 0;
 }
 
@@ -300,9 +303,9 @@ body {
 
 .hero-dl-pill:active { transform: scale(0.93); }
 
-/* ═══════════════════════════════════════
-   GALLERY — Masonry
-═══════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   GALLERY
+═══════════════════════════════════════════ */
 #gallery {
   display: flex;
   gap: 10px;
@@ -372,7 +375,6 @@ body {
   transform: translateY(0);
 }
 
-/* Always show download button on touch devices */
 @media (hover: none) {
   .gal-dl {
     opacity: 1;
@@ -421,6 +423,7 @@ body {
   max-width: 95vw;
   max-height: 90vh;
   border-radius: 0.5rem;
+  /* scale = compositor only */
   animation: lbImgIn 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
   box-shadow: 0 10px 50px rgba(0, 0, 0, 0.4);
   object-fit: contain;
@@ -488,6 +491,78 @@ body {
   gap: 0.4rem;
   font-size: 0.85rem;
   font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s ease;
+  font-family: inherit;
+}
+
+#lb-dl-btn:active { transform: scale(0.94); }
+
+/* ═══════════════════════════════════════════
+   SKELETON / LOADING
+═══════════════════════════════════════════ */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    var(--placeholder) 25%,
+    var(--surface) 50%,
+    var(--placeholder) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  contain: strict;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6rem 0;
+  gap: 1rem;
+  text-align: center;
+}
+
+.empty-state code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+nt-weight: 600;
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
