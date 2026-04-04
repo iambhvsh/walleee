@@ -30,9 +30,6 @@ html {
   --btn-bg:     rgba(255, 255, 255, 0.90);
   --btn-color:  #1d1d1f;
   --pill-bg:    rgba(255, 255, 255, 0.88);
-
-  /* Theme transition overlay — opacity is GPU-composited, not painted */
-  --theme-overlay-opacity: 0;
 }
 
 [data-theme="dark"] {
@@ -48,24 +45,39 @@ html {
   --pill-bg:    rgba(44, 44, 46, 0.88);
 }
 
-/* ═══════════════════════════════════════════
-   THEME TRANSITION
+/* ═══════════════════════��═══════════════════
+   THEME TRANSITION — GPU-ACCELERATED FADE
 ═══════════════════════════════════════════ */
-html::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 99999;
-  will-change: opacity;
+html {
   transition: none;
 }
 
-html[data-theme-transitioning]::after {
-  opacity: 1;
-  transition: opacity 0.22s ease-out;
+body {
+  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: background-color, color;
+}
+
+/* GPU-optimized color transitions for all elements */
+#site-header,
+.info-dialog,
+.hero-carousel-slide,
+.gal-item,
+.empty-state,
+.modal-link,
+.icon-btn {
+  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Input and button elements */
+button,
+input {
+  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ═══════════════════════════════════════════
@@ -502,7 +514,7 @@ body {
 
 /* ═══════════════════════════════════════════
    SKELETON / LOADING
-═══════════════��═══════════════════════════ */
+═══════════════════════════════════════════ */
 @keyframes shimmer {
   0%   { background-position: -600px 0; }
   100% { background-position:  600px 0; }
@@ -528,7 +540,7 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════
+/* ═════════════════════════��═════════════════
    EMPTY STATE
 ═══════════════════════════════════════════ */
 .empty-state {
@@ -560,5 +572,19 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  body {
+    transition: none !important;
+  }
+
+  #site-header,
+  .info-dialog,
+  .hero-carousel-slide,
+  .gal-item,
+  .empty-state,
+  .modal-link,
+  .icon-btn {
+    transition: none !important;
   }
 }
