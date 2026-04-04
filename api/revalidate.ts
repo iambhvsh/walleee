@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { ApiErrorResponse } from '../src/types/index';
-import { API_SECRET, REVALIDATE_SECRET, APP_URL } from './_config';
+import { API_SECRET, REVALIDATE_SECRET, APP_URL } from './_config.js';
 
 // ─── Vercel config ────────────────────────────────────────────────────────────
 
