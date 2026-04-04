@@ -11,7 +11,7 @@ import {
   REVALIDATE_SECRET, assertEnv, sanitiseFolder,
 } from './_config';
 
-// ─── API security ─────────────────────────────────────────────────────────────
+// ─── API security ────────────────────────────────────────────────────────────
 
 function isAuthorised(req: VercelRequest): boolean {
   // 1. Internal cache-bust call from revalidate.ts carries the bypass token
@@ -59,7 +59,6 @@ function transformResource(cloudName: string, r: CloudinaryResource): WallpaperI
 }
 
 // ─── Cloudinary Search API — full cursor pagination ───────────────────────────
-//
 
 const MAX_PAGES        = 200;  // 200 × 500 = 100k images max
 const BACKOFF_BASE_MS  = 400;
@@ -151,7 +150,7 @@ async function fetchAllCloudinaryResources(
   return { resources: allResources, totalCount };
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
+// ─── Handler ────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // Block external access
@@ -178,7 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       total: totalCount,
     };
 
-    // ── Caching strategy ──────────────────────────────────────────────────────
+    // ── Caching strategy ────────────────────────────────────────────��─────────
     res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=2592000');
     res.status(200).json(payload);
   } catch (err) {
