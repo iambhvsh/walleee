@@ -12,7 +12,6 @@
 
 html {
   scroll-behavior: smooth;
-  /* Hint to browser: the page will scroll — promote it to own layer early */
   will-change: scroll-position;
 }
 
@@ -45,39 +44,26 @@ html {
   --pill-bg:    rgba(44, 44, 46, 0.88);
 }
 
-/* ═══════════════════════��═══════════════════
-   THEME TRANSITION — GPU-ACCELERATED FADE
+/* ═══════════════════════════════════════════
+   THEME TRANSITION — GPU COMPOSITED FADE
 ═══════════════════════════════════════════ */
-html {
-  transition: none;
+html::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99998;
+  will-change: opacity;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-body {
-  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  will-change: background-color, color;
-}
-
-/* GPU-optimized color transitions for all elements */
-#site-header,
-.info-dialog,
-.hero-carousel-slide,
-.gal-item,
-.empty-state,
-.modal-link,
-.icon-btn {
-  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              border-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              box-shadow 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Input and button elements */
-button,
-input {
-  transition: background-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              border-color 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+html[data-theme-transitioning]::after {
+  opacity: 1;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ═══════════════════════════════════════════
@@ -435,7 +421,6 @@ body {
   max-width: 95vw;
   max-height: 90vh;
   border-radius: 0.5rem;
-  /* scale = compositor only */
   animation: lbImgIn 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
   box-shadow: 0 10px 50px rgba(0, 0, 0, 0.4);
   object-fit: contain;
@@ -540,7 +525,7 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═════════════════════════��═════════════════
+/* ═══════════════════════════════════════════
    EMPTY STATE
 ═══════════════════════════════════════════ */
 .empty-state {
@@ -574,17 +559,11 @@ body {
     transition-duration: 0.01ms !important;
   }
 
-  body {
+  html::after {
     transition: none !important;
   }
 
-  #site-header,
-  .info-dialog,
-  .hero-carousel-slide,
-  .gal-item,
-  .empty-state,
-  .modal-link,
-  .icon-btn {
+  html[data-theme-transitioning]::after {
     transition: none !important;
   }
 }
