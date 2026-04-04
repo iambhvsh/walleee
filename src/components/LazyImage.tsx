@@ -9,12 +9,29 @@ interface LazyImageProps {
   className?: string;
   onLoad?: () => void;
   rootMargin?: string;
+  priority?: boolean;
 }
 
-/**
- * Image that defers loading until near the viewport.
- * Fades in on load. Falls back to native lazy if IntersectionObserver unavailable.
- */
+// Single shared IntersectionObserver instance
+type ObserverCallback = (isVisible: boolean) => void;
+const callbacks = new Map<Element, ObserverCallback>();
+
+const sharedIO =
+  typeof window !== 'undefined' && 'IntersectionObserver' in window
+    ? new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              callbacks.get(e.target)?.(true);
+              sharedIO.unobserve(e.target);
+              callbacks.delete(e.target);
+            }
+          });
+        },
+        { rootMargin: '600px 0px' },
+      )
+    : null;
+
 export function LazyImage({
   src,
   alt,
@@ -23,39 +40,30 @@ export function LazyImage({
   style,
   className,
   onLoad,
-  rootMargin = '500px 0px',
+  priority = false,
 }: LazyImageProps): React.JSX.Element {
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const imgRef  = useRef<HTMLImageElement>(null);
+  const [loaded,  setLoaded]  = useState(false);
+  const [visible, setVisible] = useState(priority);
 
   useEffect(() => {
+    if (priority) return;           // already visible
     const el = imgRef.current;
     if (!el) return;
 
-    if (!('IntersectionObserver' in window)) {
+    if (!sharedIO) {
+      // IntersectionObserver not supported
       setVisible(true);
       return;
     }
 
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin },
-    );
-
-    io.observe(el);
-    return () => io.disconnect();
-  }, [rootMargin]);
-
-  const handleLoad = (): void => {
-    setLoaded(true);
-    onLoad?.();
-  };
+    callbacks.set(el, setVisible);
+    sharedIO.observe(el);
+    return () => {
+      sharedIO.unobserve(el);
+      callbacks.delete(el);
+    };
+  }, [priority]);
 
   return (
     <img
@@ -65,15 +73,17 @@ export function LazyImage({
       width={width}
       height={height}
       decoding="async"
+      loading={priority ? 'eager' : 'lazy'}
       style={{
-        opacity: loaded ? 1 : 0,
-        transition: 'opacity 0.4s ease',
-        display: 'block',
+        opacity:    loaded ? 1 : 0,
+        transition: 'opacity 0.35s ease',
+        display:    'block',
+        willChange: loaded ? 'auto' : 'opacity', // hint GPU only while fading
         ...style,
       }}
       className={className}
-      onLoad={handleLoad}
-      onError={() => setLoaded(true)} // show broken img rather than shimmer forever
+      onLoad={() => { setLoaded(true); onLoad?.(); }}
+      onError={() => setLoaded(true)}
     />
   );
 }
