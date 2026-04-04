@@ -23,7 +23,7 @@ const sharedIO =
           entries.forEach((e) => {
             if (e.isIntersecting) {
               callbacks.get(e.target)?.(true);
-              sharedIO.unobserve(e.target);
+              sharedIO?.unobserve(e.target);
               callbacks.delete(e.target);
             }
           });
@@ -60,7 +60,7 @@ export function LazyImage({
     callbacks.set(el, setVisible);
     sharedIO.observe(el);
     return () => {
-      sharedIO.unobserve(el);
+      sharedIO?.unobserve(el);
       callbacks.delete(el);
     };
   }, [priority]);
