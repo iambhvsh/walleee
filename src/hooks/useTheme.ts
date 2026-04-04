@@ -25,23 +25,10 @@ export function useTheme(): { theme: Theme; toggle: () => void } {
     const html = document.documentElement;
     const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
 
-    // ── GPU-composited theme fade ────────────────────────────────────────────
-
-    html.setAttribute('data-theme-transitioning', '');
-
-    // Step 2: flip the theme halfway through the fade-in (at ~220ms)
-    const flipTimer = setTimeout(() => {
-      html.setAttribute('data-theme', next);
-      setTheme(next);
-      try { localStorage.setItem(LS_KEY, next); } catch { /* ignore */ }
-    }, 220);
-
-    // Step 3: remove the transitioning attribute so the overlay fades back out
-    const doneTimer = setTimeout(() => {
-      html.removeAttribute('data-theme-transitioning');
-    }, 480);
-
-    return () => { clearTimeout(flipTimer); clearTimeout(doneTimer); };
+    // Change theme immediately
+    html.setAttribute('data-theme', next);
+    setTheme(next);
+    try { localStorage.setItem(LS_KEY, next); } catch { /* ignore */ }
   }, []);
 
   return { theme, toggle };
