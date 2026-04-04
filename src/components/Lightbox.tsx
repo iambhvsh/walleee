@@ -1,6 +1,7 @@
-import { useRef, useCallback, type TouchEvent } from 'react';
+import { useRef, useCallback, useEffect, type TouchEvent } from 'react';
 import type { WallpaperItem } from '@/types';
-import { downloadFile, filenameFromPublicId } from '@/utils/download';
+import { downloadFile, filenameFromItem } from '@/utils/download';
+import { DownloadIcon } from './Gallery';
 
 interface LightboxProps {
   isOpen: boolean;
@@ -12,6 +13,13 @@ interface LightboxProps {
 
 export function Lightbox({ isOpen, current, onClose, onNext, onPrev }: LightboxProps): React.JSX.Element {
   const touchStartX = useRef<number>(0);
+
+  // Trap focus inside lightbox when open (accessibility)
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    return () => { previous?.focus(); };
+  }, [isOpen]);
 
   const handleTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
     touchStartX.current = e.changedTouches[0]?.screenX ?? 0;
@@ -28,33 +36,39 @@ export function Lightbox({ isOpen, current, onClose, onNext, onPrev }: LightboxP
 
   const handleDownload = useCallback(() => {
     if (!current) return;
-    downloadFile(current.url, filenameFromPublicId(current.publicId));
+    downloadFile(current.url, filenameFromItem(current.publicId, current.format));
   }, [current]);
+
+  // Use conditional rendering instead of CSS opacity
+  if (!isOpen) return <></>;
 
   return (
     <div
       id="custom-lightbox"
-      className={`custom-lightbox${isOpen ? ' visible' : ''}`}
-      aria-modal={isOpen}
+      className="custom-lightbox visible"
       role="dialog"
+      aria-modal="true"
       aria-label="Wallpaper viewer"
     >
-      <div className="lb-backdrop" id="lb-backdrop" onClick={onClose} />
+      <div className="lb-backdrop" onClick={onClose} />
 
       <button className="lb-close" onClick={onClose} aria-label="Close">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
 
       <button className="lb-nav lb-prev" onClick={onPrev} aria-label="Previous">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
 
       <button className="lb-nav lb-next" onClick={onNext} aria-label="Next">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </button>
@@ -70,15 +84,14 @@ export function Lightbox({ isOpen, current, onClose, onNext, onPrev }: LightboxP
             src={current.url}
             alt={current.title ?? 'Wallpaper'}
             className="lb-img"
+            decoding="async"
           />
         )}
       </div>
 
       {current && (
         <button id="lb-dl-btn" onClick={handleDownload} aria-label="Save wallpaper">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
+          <DownloadIcon size={15} />
           <span>Save</span>
         </button>
       )}
