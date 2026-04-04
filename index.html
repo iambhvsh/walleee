@@ -6,23 +6,21 @@
     <title>Walleee</title>
     <meta name="description" content="A curated collection of high-quality wallpapers." />
 
-    <!-- Preconnect for fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Inline theme init — prevents flash of wrong theme before JS runs -->
+ 
     <script>
       (function () {
         var saved;
-        try { saved = localStorage.getItem('walleee-theme'); } catch (e) {}
+        try { saved = localStorage.getItem('walleee-theme') || null; } catch (e) {}
         var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute(
           'data-theme',
-          saved || (prefersDark ? 'dark' : 'light')
+          saved !== null ? saved : (prefersDark ? 'dark' : 'light')
         );
       })();
     </script>
