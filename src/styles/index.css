@@ -45,28 +45,6 @@ html {
 }
 
 /* ═══════════════════════════════════════════
-   THEME TRANSITION — GPU COMPOSITED FADE
-═══════════════════════════════════════════ */
-html::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 99998;
-  will-change: opacity;
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-html[data-theme-transitioning]::after {
-  opacity: 1;
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ═══════════════════════════════════════════
    BASE LAYOUT
 ═══════════════════════════════════════════ */
 body {
@@ -559,11 +537,4 @@ body {
     transition-duration: 0.01ms !important;
   }
 
-  html::after {
-    transition: none !important;
-  }
-
-  html[data-theme-transitioning]::after {
-    transition: none !important;
-  }
 }
