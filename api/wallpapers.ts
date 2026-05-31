@@ -11,28 +11,19 @@ import {
   REVALIDATE_SECRET, assertEnv, sanitiseFolder,
 } from './_config.js';
 
-// ─── API security ────────────────────────────────────────────────────────────
-
 function isAuthorised(req: VercelRequest): boolean {
-  // 1. Internal cache-bust call from revalidate.ts carries the bypass token
   const bypassToken = req.headers['x-walleee-token'];
   if (REVALIDATE_SECRET && bypassToken === REVALIDATE_SECRET) return true;
 
-  // 2. Same-origin browser requests carry the Vercel deployment URL as referer/origin
   const origin  = req.headers['origin']  ?? '';
   const referer = req.headers['referer'] ?? '';
   const host    = req.headers['host']    ?? '';
 
-  // Allow requests that originate from the same host
   if (origin.includes(host) || referer.includes(host)) return true;
-
-  // 3. Vercel-internal: no origin header at all means same-origin SSR / edge
   if (!origin && !referer) return true;
 
   return false;
 }
-
-// ─── Cloudinary URL builders ──────────────────────────────────────────────────
 
 function thumbUrl(cloudName: string, publicId: string, width: number): string {
   return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_${width},c_limit/${publicId}`;
@@ -58,12 +49,10 @@ function transformResource(cloudName: string, r: CloudinaryResource): WallpaperI
   return item;
 }
 
-// ─── Cloudinary Search API — full cursor pagination ───────────────────────────
-
-const MAX_PAGES        = 200;  // 200 × 500 = 100k images max
-const BACKOFF_BASE_MS  = 400;
-const MAX_RETRIES      = 3;
-const PAGE_TIMEOUT_MS  = 8000; // 8s per page
+const MAX_PAGES       = 200;
+const BACKOFF_BASE_MS = 400;
+const MAX_RETRIES     = 3;
+const PAGE_TIMEOUT_MS = 8000;
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -90,7 +79,6 @@ async function fetchPageWithRetry(
     const delay = retryAfter
       ? Number(retryAfter) * 1000
       : BACKOFF_BASE_MS * Math.pow(2, attempt);
-    console.warn(`[wallpapers] 429 rate-limited — retry in ${delay}ms (attempt ${attempt + 1})`);
     await sleep(delay);
     return fetchPageWithRetry(url, options, attempt + 1);
   }
@@ -115,10 +103,7 @@ async function fetchAllCloudinaryResources(
   let page = 0;
 
   do {
-    if (page >= MAX_PAGES) {
-      console.warn(`[wallpapers] Reached MAX_PAGES (${MAX_PAGES}) — stopping`);
-      break;
-    }
+    if (page >= MAX_PAGES) break;
     page++;
 
     const body: Record<string, unknown> = {
@@ -135,9 +120,7 @@ async function fetchAllCloudinaryResources(
     );
 
     if (!res.ok) {
-      const text = await res.text();
       throw new Error(`Cloudinary page ${page} HTTP ${res.status}`);
-      void text;
     }
 
     const data = (await res.json()) as CloudinarySearchResponse;
@@ -150,10 +133,7 @@ async function fetchAllCloudinaryResources(
   return { resources: allResources, totalCount };
 }
 
-// ─── Handler ────────────────────────────────────────────────────────────────
-
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  // Block external access
   if (!isAuthorised(req)) {
     res.status(403).json({ error: 'forbidden' });
     return;
@@ -177,7 +157,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       total: totalCount,
     };
 
-    // ── Caching strategy ────────────────────────────────────────────��─────────
     res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=2592000');
     res.status(200).json(payload);
   } catch (err) {
