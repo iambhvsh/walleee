@@ -1,15 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 import type { ApiErrorResponse } from '../src/types/index';
 import { API_SECRET, REVALIDATE_SECRET, APP_URL } from './_config.js';
-
-// ─── Vercel config ────────────────────────────────────────────────────────────
 
 export const config = {
   api: { bodyParser: false },
 };
-
-// ─── Read raw body from stream ────────────────────────────────────────────────
 
 function readRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -19,8 +15,6 @@ function readRawBody(req: VercelRequest): Promise<string> {
     req.on('error', reject);
   });
 }
-
-// ─── Cloudinary webhook signature verification ────────────────────────────────
 
 function verifyCloudinarySignature(
   rawBody: string,
@@ -33,8 +27,8 @@ function verifyCloudinarySignature(
   const age = Math.abs(Date.now() / 1000 - Number(timestamp));
   if (Number.isNaN(age) || age > 7200) return false;
 
-  const expected = createHmac('sha256', secret)
-    .update(rawBody + timestamp)
+  const expected = createHash('sha256')
+    .update(rawBody + timestamp + secret)
     .digest('hex');
 
   try {
@@ -46,8 +40,6 @@ function verifyCloudinarySignature(
     return false;
   }
 }
-
-// ─── Bust /api/wallpapers cache ───────────────────────────────────────────────
 
 async function revalidateWallpapersCache(): Promise<void> {
   if (!APP_URL || !REVALIDATE_SECRET) {
@@ -68,19 +60,12 @@ async function revalidateWallpapersCache(): Promise<void> {
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`Cache bust HTTP ${res.status}`);
-    console.log(`[revalidate] Cache busted (${res.status})`);
   } finally {
     clearTimeout(timer);
   }
 }
 
-// ─── Handler ────────────────────────────────────────────────────────────────
-
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
-  console.log('[revalidate] REQUEST RECEIVED');
-  console.log('[revalidate] method:', req.method);
-  console.log('[revalidate] ua:', req.headers['user-agent']);
-  
   if (req.method !== 'POST') {
     const err: ApiErrorResponse = { error: 'method_not_allowed', message: 'Only POST is supported' };
     res.status(405).json(err);
@@ -95,18 +80,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  // Read the raw stream — body is unparsed because bodyParser: false
   const rawBody = await readRawBody(req);
 
   if (!verifyCloudinarySignature(rawBody, timestamp, signature)) {
-    console.warn('[revalidate] Signature verification failed');
     res.status(401).json({ error: 'unauthorized', message: 'Invalid signature' });
     return;
   }
 
-  console.log('[revalidate] Signature verification passed');
-
-  // Parse body now that we've verified the signature
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(rawBody) as Record<string, unknown>;
@@ -123,14 +103,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  console.log(`[revalidate] Event: ${notificationType} — busting cache`);
-  console.log('[revalidate] Cache bust starting');
-
   try {
     await revalidateWallpapersCache();
     res.status(200).json({ ok: true, revalidated: true });
   } catch (err) {
     console.error('[revalidate]', err);
-    res.status(200).json({ ok: false }); // 200 so Cloudinary doesn't retry
+    res.status(200).json({ ok: false });
   }
 }
