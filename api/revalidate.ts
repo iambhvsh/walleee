@@ -77,6 +77,10 @@ async function revalidateWallpapersCache(): Promise<void> {
 // ─── Handler ────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  console.log('[revalidate] REQUEST RECEIVED');
+  console.log('[revalidate] method:', req.method);
+  console.log('[revalidate] ua:', req.headers['user-agent']);
+  
   if (req.method !== 'POST') {
     const err: ApiErrorResponse = { error: 'method_not_allowed', message: 'Only POST is supported' };
     res.status(405).json(err);
@@ -100,6 +104,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
+  console.log('[revalidate] Signature verification passed');
+
   // Parse body now that we've verified the signature
   let body: Record<string, unknown>;
   try {
@@ -118,6 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   console.log(`[revalidate] Event: ${notificationType} — busting cache`);
+  console.log('[revalidate] Cache bust starting');
 
   try {
     await revalidateWallpapersCache();
